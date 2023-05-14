@@ -1,4 +1,5 @@
 from game import Game
 
-game = Game(500)
+StartBalance = 500 #starting balance
+game = Game(StartBalance)
 game.start()
