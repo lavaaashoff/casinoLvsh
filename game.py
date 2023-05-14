@@ -1,5 +1,4 @@
 from random import choice
-from numpy import unique
 import sqlite3
 
 #подключение базы данных
@@ -11,8 +10,9 @@ class Game:
 
     def __init__(self, balance):
         self.balance = balance
-        self.symbols = ["7", "#", "$"]
-
+        self.symbols = {"777" : 10,
+                        "$$$" : 5,
+                        "###" : 3}
     #основной метод, запускающий игру
     def start(self):
 
@@ -38,10 +38,11 @@ class Game:
         self.base()
     
     def generate(self): #создание списка из символов
+        gensymbols = ["7", "#", "$"]
         res = []
         for _ in range(3):
-            res.append(choice(self.symbols))
-        return res
+            res.append(choice(gensymbols))
+        return "".join(res)
     
     def valid_bet(self, bet): #проверка ставки на валидность
         if str(bet).isnumeric() and 0 < int(bet) < self.balance:
@@ -53,26 +54,18 @@ class Game:
         if self.valid_bet(bet):
             bet = int(bet)
             res = self.generate()
-            wl = "win"
-            if len(unique(res)) == 1 and res[0] == "7":
-                self.balance += bet * 10
-                print("Вы выиграли x10! Теперь ваш баланс", self.balance)
-                print(*res)
-            elif len(unique(res)) == 1 and res[0] == "#":
-                self.balance += bet * 5
-                print("Вы выиграли x5! Теперь ваш баланс", self.balance)
-                print(*res)
-            elif len(unique(res)) == 1 and res[0] == "$":
-                self.balance += bet * 3
-                print("Вы выиграли x3! Теперь ваш баланс", self.balance)
-                print(*res)
-            else:
-                self.balance -= bet
-                print(*res)
-                print("К сожалению вы проиграли :( Теперь ваш баланс", self.balance)
-                wl = "lose"
+            wl = "lose"
+            if res not in self.symbols: #проверка проигрыша
+                self.balance -= bet      
+                print(res)      
+                print(f"К сожалению вы проиграли :( Теперь ваш баланс {self.balance}")
+            elif res in self.symbols: #проверка выигрыша
+                self.balance += bet * self.symbols[res]
+                print(res)
+                print(f"Вы выиграли x{self.symbols[res]}! Теперь ваш баланс {self.balance}")
+                wl = "win"    
             cursor.execute("""INSERT INTO results(balance, bet, symbols, res)
-                       VALUES('%d', '%d', '%s', '%s')""" % (self.balance, bet, "".join(res), wl ))
+                       VALUES('%d', '%d', '%s', '%s')""" % (self.balance, bet, res, wl ))
             db.commit()
         else:
             print("Недопустимая ставка.")
@@ -81,6 +74,6 @@ class Game:
         if input("Вывести базу данных? ").lower() == "да":
             for value in cursor.execute("SELECT * FROM results"):
                 print(value)
-        
         cursor.execute("DROP TABLE results")
+        db.commit()
     
