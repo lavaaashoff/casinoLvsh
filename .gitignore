@@ -1,2 +1,4 @@
 
 __pycache__/game.cpython-311.pyc
+*.pyc
+casino.db

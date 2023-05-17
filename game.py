@@ -1,5 +1,8 @@
 from random import choice
 import sqlite3
+import colorama
+
+colorama.init(autoreset=True)
 
 #database connection
 db = sqlite3.connect("casino.db")
@@ -45,9 +48,14 @@ class Game:
         return "".join(res)
     
     def valid_bet(self, bet): #checking the possibility of a bet
-        if str(bet).isnumeric() and 0 < int(bet) < self.balance:
+        if not str(bet).isnumeric():
+            print(colorama.Back.YELLOW + colorama.Fore.BLACK + "[WARNING] Invalid bet: Use symbols 1-9")
+            return False
+        elif 0 >= int(bet) or int(bet) >= self.balance:
+            print(colorama.Back.YELLOW + colorama.Fore.BLACK + "[WARNING] Invalid bet: Use number > 0 and < balance")
+            return False
+        else:
             return True
-        return False
     
     def bet_result(self): #receiving a bet, choosing the result of a bet
         bet = input("Enter your bet: ")
@@ -58,17 +66,15 @@ class Game:
             if res not in self.symbols: #check for loss
                 self.balance -= bet      
                 print(res)      
-                print(f"Unfortunately you lost :( Now your balance {self.balance}")
+                print(colorama.Fore.RED + "Unfortunately you lost :(", f"Now your balance: {self.balance}")
             elif res in self.symbols: #check for victory
                 self.balance += bet * self.symbols[res]
                 print(res)
-                print(f"you won x{self.symbols[res]}! Now your balance {self.balance}")
+                print(colorama.Fore.GREEN + f"You won x{self.symbols[res]}!", f"Now your balance: {self.balance}")
                 wl = "win"    
             cursor.execute("""INSERT INTO results(balance, bet, symbols, res)
                        VALUES('%d', '%d', '%s', '%s')""" % (self.balance, bet, res, wl ))
             db.commit()
-        else:
-            print("Invalid bet.")
 
     def base(self): #outputting the database if necessary and deleting
         if input("Show database? (Yes, No) ").lower() == "yes":
